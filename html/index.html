@@ -1,0 +1,104 @@
+<!DOCTYPE HTML>
+<html>
+<body>
+  <canvas id="myCanvas" width="600" height="600"></canvas>
+<script type="text/javascript">
+
+var canvas=document.getElementById('myCanvas');
+var ctx=canvas.getContext('2d');
+
+const darkColor = "#000000", whiteColor = "#FFFFFF"
+
+var parseData = []
+
+// 生成定位标识 以1:1:3:1:1生成定位符号, 生成左上，右上，左下
+function genPosition(type, width, bitWidth) {
+  let startPosX = 0; startPosY = 0;
+  switch (type) {
+    case 'leftTop' : break;
+    case 'rightTop' : startPosX = width - 7 - 1; break;
+    case 'leftBottom' : startPosY = width - 7 - 1; break;
+  }
+
+  for(let i = 0; i < 7; i++) { // y轴
+    for(let j = 0; j < 7; j++) { // X轴
+      let color = whiteColor
+      if(i == 0 || j == 0 || i == 6 || j == 6 || (i > 1 && i < 5 && j > 1 & j < 5))
+        parseData[i+startPosY][j+startPosX] = 1
+    }    
+  }
+}
+
+// ----------总流程------------
+// TODO version 2
+// 数据分析-->数据编码-->纠错编码-->构造最终数据-->构造矩阵-->打上掩码-->填充格式与版本信息
+
+// TODO 数据分析
+
+// TODO 数据编码
+function encodeStr(str) {
+  let parseData = []
+  for(let i=0; i<str.length; i++) {
+    parseData.push(str.charCodeAt(i).toString(2))
+  }
+
+  // parseData.unshift(str.length.toString(2))
+  // parseData.unshift('0100')
+  
+  // parseData.push('0000')
+  // console.log(parseData)
+
+  // 补齐码 11101100 00010001
+  // while(parseData.length < 19) {
+  //   parseData.push('11101100')
+  //   parseData.push('00010001')
+  // }
+
+  // parseData = parseData.slice(0, 19)
+  console.log(parseData)
+  return parseData
+}
+
+// 纠错编码 v-1 l : [1, 26, 19]
+
+
+
+// 生成最终图片
+function genQRCodemap(width, bitWidth) {
+  for(let row = 0; row < width; row++) {
+    parseData[row] = new Array(width).fill(0)
+  }
+  genPosition('leftTop', width, bitWidth)
+  genPosition('rightTop', width, bitWidth)
+  genPosition('leftBottom', width, bitWidth)
+  // // 21 * 21 像素的矩阵
+  for(let row = 0; row < width; row++) {
+    for(let col = 0; col < width; col++) {
+      let color = parseData[row][col] == 0 ? whiteColor : darkColor
+      ctx.fillStyle=color;
+      ctx.fillRect(col*bitWidth,row*bitWidth,bitWidth,bitWidth);
+    }    
+  }
+}
+
+
+ 
+// 运行
+genQRCodemap(21, 12)
+encodeStr('hello world')
+
+
+let rs_list = []
+for(let i=0; i< 255; i++) {
+  let rs = 1 << i
+  if(i > 7) {
+    rs = rs_list[i-1] * 2
+    rs = rs > 255 ? rs ^ 285 : rs
+  }
+  rs_list[i] = rs
+}
+console.log(rs_list)
+</script>
+
+</body>
+</html>
